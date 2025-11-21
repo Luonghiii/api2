@@ -1,4 +1,4 @@
-// Vercel Serverless Function - CORS Proxy for 34tinhthanh.com API
+// Vercel Serverless Function - Test Proxy (không call PHP)
 
 export default async function handler(req, res) {
   // Enable CORS
@@ -11,33 +11,73 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  try {
-    // Build API URL with all query params
-    const params = new URLSearchParams(req.query).toString();
-    const apiUrl = `https://34tinhthanh.com/address-api.php?${params}`;
+  // Get query parameters
+  const { action } = req.query;
 
-    console.log('Proxying to:', apiUrl);
+  console.log('Received action:', action);
+  console.log('All params:', req.query);
 
-    // Fetch from actual API
-    const response = await fetch(apiUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      }
-    });
-
-    // Get response data
-    const data = await response.json();
-    
-    console.log('Response status:', response.status);
-    
-    // Return data with same status code
-    return res.status(response.status).json(data);
-
-  } catch (error) {
-    console.error('Proxy error:', error);
-    return res.status(500).json({ 
-      error: 'Failed to fetch data',
-      message: error.message 
+  // Trả về data tĩnh để test
+  if (!action || action === '') {
+    return res.status(400).json({ 
+      error: 'Tham số không hợp lệ',
+      message: 'Action parameter is required'
     });
   }
+
+  if (action === 'districts') {
+    return res.status(200).json([
+      { "name": "Huyện Cờ Đỏ" },
+      { "name": "Huyện Phong Điền" },
+      { "name": "Huyện Thới Lai" },
+      { "name": "Quận Ninh Kiều" }
+    ]);
+  }
+
+  if (action === 'wards') {
+    return res.status(200).json([
+      { "name": "Xã Trung An" },
+      { "name": "Xã Đông Hiệp" },
+      { "name": "Xã Đông Thắng" }
+    ]);
+  }
+
+  if (action === 'convert') {
+    return res.status(200).json({
+      "old_ward_name": "Xã Trung An",
+      "old_district_name": "Huyện Cờ Đỏ",
+      "old_province_name": "Thành phố Cần Thơ",
+      "new_ward_name": "Phường Trung Nhứt",
+      "new_province_name": "Thành phố Cần Thơ"
+    });
+  }
+
+  if (action === 'new_wards') {
+    return res.status(200).json([
+      { "name": "Phường Cửa Lò" },
+      { "name": "Phường Hoàng Mai" },
+      { "name": "Phường Tây Hiếu" }
+    ]);
+  }
+
+  if (action === 'convert-reverse') {
+    return res.status(200).json([
+      {
+        "old_ward_name": "Xã Nghĩa Tiến",
+        "old_district_name": "Thị xã Thái Hoà",
+        "old_province_name": "Tỉnh Nghệ An"
+      },
+      {
+        "old_ward_name": "Phường Quang Tiến",
+        "old_district_name": "Thị xã Thái Hoà",
+        "old_province_name": "Tỉnh Nghệ An"
+      }
+    ]);
+  }
+
+  // Action không hợp lệ
+  return res.status(400).json({
+    error: 'Invalid action',
+    message: `Action '${action}' is not supported`
+  });
 }
