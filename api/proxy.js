@@ -11,35 +11,12 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  // Get query parameters
-  const { 
-    action, 
-    province_name, 
-    district_name, 
-    old_ward_name, 
-    new_ward_name, 
-    old_district_name, 
-    old_province_name, 
-    new_province_name 
-  } = req.query;
-
-  if (!action) {
-    return res.status(400).json({ error: 'Missing action parameter' });
-  }
-
   try {
-    // Build API URL
-    let apiUrl = `https://34tinhthanh.com/address-api.php?action=${action}`;
-    
-    if (province_name) apiUrl += `&province_name=${encodeURIComponent(province_name)}`;
-    if (district_name) apiUrl += `&district_name=${encodeURIComponent(district_name)}`;
-    if (old_ward_name) apiUrl += `&old_ward_name=${encodeURIComponent(old_ward_name)}`;
-    if (old_district_name) apiUrl += `&old_district_name=${encodeURIComponent(old_district_name)}`;
-    if (old_province_name) apiUrl += `&old_province_name=${encodeURIComponent(old_province_name)}`;
-    if (new_ward_name) apiUrl += `&new_ward_name=${encodeURIComponent(new_ward_name)}`;
-    if (new_province_name) apiUrl += `&new_province_name=${encodeURIComponent(new_province_name)}`;
+    // Build API URL with all query params
+    const params = new URLSearchParams(req.query).toString();
+    const apiUrl = `https://34tinhthanh.com/address-api.php?${params}`;
 
-    console.log('Fetching:', apiUrl);
+    console.log('Proxying to:', apiUrl);
 
     // Fetch from actual API
     const response = await fetch(apiUrl, {
@@ -48,14 +25,13 @@ export default async function handler(req, res) {
       }
     });
 
-    if (!response.ok) {
-      throw new Error(`API returned ${response.status}`);
-    }
-
+    // Get response data
     const data = await response.json();
     
-    // Return data with success status
-    return res.status(200).json(data);
+    console.log('Response status:', response.status);
+    
+    // Return data with same status code
+    return res.status(response.status).json(data);
 
   } catch (error) {
     console.error('Proxy error:', error);
