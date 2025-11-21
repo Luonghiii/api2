@@ -12,7 +12,16 @@ export default async function handler(req, res) {
   }
 
   // Get query parameters
-  const { action, province_name, district_name, old_ward_name, new_ward_name, old_district_name, old_province_name, new_province_name } = req.query;
+  const { 
+    action, 
+    province_name, 
+    district_name, 
+    old_ward_name, 
+    new_ward_name, 
+    old_district_name, 
+    old_province_name, 
+    new_province_name 
+  } = req.query;
 
   if (!action) {
     return res.status(400).json({ error: 'Missing action parameter' });
@@ -30,6 +39,8 @@ export default async function handler(req, res) {
     if (new_ward_name) apiUrl += `&new_ward_name=${encodeURIComponent(new_ward_name)}`;
     if (new_province_name) apiUrl += `&new_province_name=${encodeURIComponent(new_province_name)}`;
 
+    console.log('Fetching:', apiUrl);
+
     // Fetch from actual API
     const response = await fetch(apiUrl, {
       headers: {
@@ -43,7 +54,7 @@ export default async function handler(req, res) {
 
     const data = await response.json();
     
-    // Return data
+    // Return data with success status
     return res.status(200).json(data);
 
   } catch (error) {
