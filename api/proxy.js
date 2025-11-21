@@ -1,4 +1,4 @@
-// Vercel Serverless Function - Test Proxy (không call PHP)
+// Vercel Serverless Function - CORS Proxy for 34tinhthanh.com API
 
 export default async function handler(req, res) {
   // Enable CORS
@@ -12,72 +12,56 @@ export default async function handler(req, res) {
   }
 
   // Get query parameters
-  const { action } = req.query;
+  const { 
+    action, 
+    province_name, 
+    district_name, 
+    old_ward_name, 
+    new_ward_name, 
+    old_district_name, 
+    old_province_name, 
+    new_province_name 
+  } = req.query;
 
-  console.log('Received action:', action);
-  console.log('All params:', req.query);
-
-  // Trả về data tĩnh để test
-  if (!action || action === '') {
-    return res.status(400).json({ 
-      error: 'Tham số không hợp lệ',
-      message: 'Action parameter is required'
-    });
+  if (!action) {
+    return res.status(400).json({ error: 'Missing action parameter' });
   }
 
-  if (action === 'districts') {
-    return res.status(200).json([
-      { "name": "Huyện Cờ Đỏ" },
-      { "name": "Huyện Phong Điền" },
-      { "name": "Huyện Thới Lai" },
-      { "name": "Quận Ninh Kiều" }
-    ]);
-  }
+  try {
+    // Build API URL
+    let apiUrl = `https://34tinhthanh.com/address-api.php?action=${action}`;
+    
+    if (province_name) apiUrl += `&province_name=${encodeURIComponent(province_name)}`;
+    if (district_name) apiUrl += `&district_name=${encodeURIComponent(district_name)}`;
+    if (old_ward_name) apiUrl += `&old_ward_name=${encodeURIComponent(old_ward_name)}`;
+    if (old_district_name) apiUrl += `&old_district_name=${encodeURIComponent(old_district_name)}`;
+    if (old_province_name) apiUrl += `&old_province_name=${encodeURIComponent(old_province_name)}`;
+    if (new_ward_name) apiUrl += `&new_ward_name=${encodeURIComponent(new_ward_name)}`;
+    if (new_province_name) apiUrl += `&new_province_name=${encodeURIComponent(new_province_name)}`;
 
-  if (action === 'wards') {
-    return res.status(200).json([
-      { "name": "Xã Trung An" },
-      { "name": "Xã Đông Hiệp" },
-      { "name": "Xã Đông Thắng" }
-    ]);
-  }
+    console.log('Fetching:', apiUrl);
 
-  if (action === 'convert') {
-    return res.status(200).json({
-      "old_ward_name": "Xã Trung An",
-      "old_district_name": "Huyện Cờ Đỏ",
-      "old_province_name": "Thành phố Cần Thơ",
-      "new_ward_name": "Phường Trung Nhứt",
-      "new_province_name": "Thành phố Cần Thơ"
-    });
-  }
-
-  if (action === 'new_wards') {
-    return res.status(200).json([
-      { "name": "Phường Cửa Lò" },
-      { "name": "Phường Hoàng Mai" },
-      { "name": "Phường Tây Hiếu" }
-    ]);
-  }
-
-  if (action === 'convert-reverse') {
-    return res.status(200).json([
-      {
-        "old_ward_name": "Xã Nghĩa Tiến",
-        "old_district_name": "Thị xã Thái Hoà",
-        "old_province_name": "Tỉnh Nghệ An"
-      },
-      {
-        "old_ward_name": "Phường Quang Tiến",
-        "old_district_name": "Thị xã Thái Hoà",
-        "old_province_name": "Tỉnh Nghệ An"
+    // Fetch from actual API
+    const response = await fetch(apiUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       }
-    ]);
-  }
+    });
 
-  // Action không hợp lệ
-  return res.status(400).json({
-    error: 'Invalid action',
-    message: `Action '${action}' is not supported`
-  });
+    if (!response.ok) {
+      throw new Error(`API returned ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    // Return data with success status
+    return res.status(200).json(data);
+
+  } catch (error) {
+    console.error('Proxy error:', error);
+    return res.status(500).json({ 
+      error: 'Failed to fetch data',
+      message: error.message 
+    });
+  }
 }
